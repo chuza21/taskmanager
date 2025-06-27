@@ -20,8 +20,6 @@ class Task {
   });
 }
 
-
-
 class TaskManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -76,17 +74,41 @@ class _TaskListScreenState extends State<TaskListScreen> {
     });
   }
 
+  // void _deleteTask(String taskId) {
+  //   setState(() {
+  //     tasks.removeWhere((t) => t.id == taskId);
+  //   });
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('Task deleted'),
+  //       action: SnackBarAction(
+  //         label: 'Undo',
+  //         onPressed: () {
+  //           // In a real app, you'd implement undo functionality here
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
   void _deleteTask(String taskId) {
+    // Find and store the task before deleting
+    final deletedTask = tasks.firstWhere((t) => t.id == taskId);
+    final deletedIndex = tasks.indexWhere((t) => t.id == taskId);
+
     setState(() {
       tasks.removeWhere((t) => t.id == taskId);
     });
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Task deleted'),
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            // In a real app, you'd implement undo functionality here
+            // Undo the deletion by re-inserting the task
+            setState(() {
+              tasks.insert(deletedIndex, deletedTask);
+            });
           },
         ),
       ),
@@ -107,8 +129,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
       }
     });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -168,18 +188,11 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.task_alt,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
+                        Icon(Icons.task_alt, size: 64, color: Colors.grey),
                         SizedBox(height: 16),
                         Text(
                           'No tasks found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -189,7 +202,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     itemBuilder: (context, index) {
                       final task = filteredTasks[index];
                       return Card(
-                        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
                           leading: Checkbox(
                             value: task.isCompleted,
@@ -241,8 +257,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                   children: [
                                     Icon(Icons.delete, color: Colors.red),
                                     SizedBox(width: 8),
-                                    Text('Delete',
-                                        style: TextStyle(color: Colors.red)),
+                                    Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -269,7 +287,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -285,13 +308,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 color: color,
               ),
             ),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
+            Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
@@ -356,9 +373,11 @@ class _TaskDialogState extends State<TaskDialog> {
             SizedBox(height: 16),
             ListTile(
               title: Text('Due Date'),
-              subtitle: Text(_dueDate == null
-                  ? 'No due date'
-                  : '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}'),
+              subtitle: Text(
+                _dueDate == null
+                    ? 'No due date'
+                    : '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}',
+              ),
               trailing: IconButton(
                 icon: Icon(Icons.calendar_today),
                 onPressed: () async {
@@ -396,14 +415,16 @@ class _TaskDialogState extends State<TaskDialog> {
         ElevatedButton(
           onPressed: () {
             if (_titleController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please enter a title')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Please enter a title')));
               return;
             }
 
             final task = Task(
-              id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              id:
+                  widget.task?.id ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
               title: _titleController.text.trim(),
               createdAt: widget.task?.createdAt ?? DateTime.now(),
               isCompleted: widget.task?.isCompleted ?? false,
